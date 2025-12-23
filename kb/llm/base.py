@@ -53,21 +53,25 @@ class BaseLLM(ABC):
         """
         # If we have an original title, ask LLM to translate it
         if original_title:
-            system_prompt = f"""你是一个双语内容摘要专家。请为内容生成中英双语的标题和摘要。
+            system_prompt = f"""你是专业翻译。任务：翻译标题+生成摘要。
 
-原始标题: {original_title}
+【必须翻译的原始标题】: {original_title}
 
-输出格式（严格遵守）:
-标题中文: [将原始标题翻译为中文，保持准确性]
-摘要中文: [中文摘要，不超过{max_length}字]
-标题英文: [使用原始标题或略微优化]
-摘要英文: [English summary, max {max_length} words]
+【输出格式】:
+标题中文: <在这里写原始标题的完整中文翻译>
+摘要中文: <中文摘要，不超过{max_length}字>
+标题英文: {original_title}
+摘要英文: <English summary, max {max_length} words>
 
-要求:
-1. 中文标题必须是原始标题的准确翻译，不要自己编造
-2. 英文标题保持原标题或略微优化使其更简洁
-3. 摘要要抓住重点，突出价值和亮点
-4. 直接按格式输出，不要有其他内容"""
+【翻译示例】:
+- "Attention Is All You Need" → "注意力机制是你所需要的一切"
+- "Stabilizing Reinforcement Learning with LLMs: Formulation and Practices" → "稳定大语言模型强化学习：公式化方法与实践"
+- "Chain-of-Thought Prompting Elicits Reasoning" → "思维链提示激发推理能力"
+
+【严格要求】:
+- 中文标题必须翻译原标题的【所有单词】，不能遗漏任何部分
+- 如果原标题是 "A: B" 格式，中文也必须是 "A：B" 格式
+- 英文标题保持原样不变：{original_title}"""
         else:
             system_prompt = f"""你是一个双语内容摘要专家。请为内容生成中英双语的标题和摘要。
 
@@ -113,7 +117,32 @@ class BaseLLM(ABC):
         if not result["title_en"] and original_title:
             result["title_en"] = original_title
 
+        # Validate Chinese title - if too short, it's probably incomplete
+        if original_title and result["title_cn"]:
+            en_word_count = len(original_title.split())
+            cn_char_count = len(result["title_cn"])
+            # If Chinese title has fewer chars than English words, it's likely incomplete
+            # A proper translation should have at least 1.5x chars as English words
+            if cn_char_count < en_word_count * 1.2:
+                # Try to generate a better translation
+                result["title_cn"] = await self._translate_title(original_title)
+
         return result
+
+    async def _translate_title(self, title: str) -> str:
+        """Translate a title from English to Chinese."""
+        messages = [
+            {
+                "role": "system",
+                "content": "你是翻译专家。将英文标题翻译为中文，要求完整准确，不遗漏任何单词。只输出翻译结果，不要其他内容。"
+            },
+            {
+                "role": "user",
+                "content": f"翻译: {title}"
+            }
+        ]
+        response = await self.chat(messages)
+        return response.content.strip()
 
     async def suggest_tags(self, content: str, preset_tags: list[str]) -> list[str]:
         """Suggest tags for the content based on preset tags.
