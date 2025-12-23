@@ -10,13 +10,11 @@
 
 # 中文
 
-## 这是什么？
+输入链接 → 自动解析内容 → 生成双语摘要和标签 → 一键发布到 Telegram 频道
 
-### Demo
+<video src="https://github.com/0xPabloxx/telegram_knowledge_base_agent/raw/main/demo.mp4" controls width="100%"></video>
 
-https://github.com/0xPabloxx/telegram_knowledge_base_agent/raw/main/demo.mp4
-
-一个命令行工具，帮你把网上看到的好内容快速整理发布到 Telegram 频道：
+**输出示例：**
 
 ```
 输入: https://arxiv.org/abs/2312.xxxxx
@@ -113,9 +111,9 @@ https://arxiv.org/abs/2312.xxxxx
 
 # English
 
-## What is this?
+Input a link → Auto-parse content → Generate bilingual summaries & tags → Publish to Telegram
 
-A CLI tool that helps you quickly organize and publish interesting content to your Telegram channel:
+**Output Example:**
 
 ```
 Input: https://arxiv.org/abs/2312.xxxxx
