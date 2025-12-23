@@ -12,7 +12,7 @@
 
 输入链接 → 自动解析内容 → 生成双语摘要和标签 → 一键发布到 Telegram 频道
 
-<video src="https://github.com/0xPabloxx/telegram_knowledge_base_agent/raw/main/demo.mp4" controls width="100%"></video>
+![Demo](demo.gif)
 
 **输出示例：**
 
