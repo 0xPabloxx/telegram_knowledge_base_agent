@@ -1,6 +1,8 @@
-# KB - Knowledge Base CLI
+# LLM Daily - Telegram Knowledge Base CLI
 
-> Personal knowledge base automation tool with Telegram channel publishing
+> 输入链接，自动解析内容，生成双语摘要和标签，一键发布到 Telegram 频道
+>
+> Input a link, auto-parse content, generate bilingual summaries and tags, publish to Telegram with one click
 
 **Language / 语言**: [中文](#中文) | [English](#english)
 
@@ -8,76 +10,67 @@
 
 # 中文
 
-## 简介
+## 这是什么？
 
-KB 是一个个人知识库自动化 CLI 工具，支持将链接、文件、文字内容自动处理并发布到 Telegram 频道。通过 LLM 自动生成双语摘要和智能标签。
+一个命令行工具，帮你把网上看到的好内容快速整理发布到 Telegram 频道：
 
-## 功能特性
-
-### 内容处理
-- **链接解析**: 自动抓取网页内容，提取标题和正文
-  - 支持混合输入（URL + 文字描述）
-  - ArXiv 论文链接自动转换为摘要页面解析
-  - 微信公众号文章解析
-- **文件处理**: 支持本地文件拖拽输入
-  - PDF 文档：提取文本内容
-  - 图片：JPG、PNG、GIF、WebP、BMP
-- **纯文字**: 支持直接输入文字内容
-
-### AI 能力
-- **双语摘要生成**: 自动生成中英文标题和摘要
-  - 原标题自动翻译（非自动生成）
-  - 中英文摘要独立优化
-- **智能标签推荐**:
-  - 从预设标签中匹配所有相关标签（不限数量）
-  - 自动生成额外的具体标签
-  - 中英文标签自动互译
-  - 大小写变体自动生成（提升 Telegram 搜索体验）
-
-### 多 LLM 支持
-| Provider | 模型 |
-|----------|------|
-| DeepSeek | deepseek-chat |
-| OpenAI | gpt-4o-mini |
-| Anthropic | claude-3-5-sonnet |
-| Google Gemini | gemini-1.5-flash |
-| Kimi (Moonshot) | moonshot-v1-8k |
-| MiniMax | abab6.5s-chat |
-| GLM (智谱) | glm-4-flash |
-
-### 输出格式
 ```
-📌 中文标题
+输入: https://arxiv.org/abs/2312.xxxxx
 
-📝 中文摘要
+输出到 Telegram:
+📌 稳定大语言模型强化学习：公式化方法与实践
 
-🔗 链接
+📅 2024-12-01
 
-🏷️ #中文标签 #英文标签
+📝 本文提出了一种新颖的大语言模型强化学习公式...
+
+🔗 https://arxiv.org/abs/2312.xxxxx
+
+🏷️ #论文 #Paper #大语言模型 #LLM #强化学习 #RL
 
 ────────────────────
 
-📌 English Title
+📌 Stabilizing Reinforcement Learning with LLMs: Formulation and Practices
 
-📝 English summary
+📅 2024-12-01
 
-🔗 Link
+📝 This paper proposes a novel formulation for RL with LLMs...
 
-🏷️ #EnglishTag #englishtag
+🔗 https://arxiv.org/abs/2312.xxxxx
+
+🏷️ #Paper #paper #LLM #llm #RL #rl
 ```
+
+## 支持的链接类型
+
+| 类型 | 状态 | 说明 |
+|------|------|------|
+| ArXiv | ✅ 已支持 | 自动提取论文标题、摘要、发布日期 |
+| 微信公众号 | ✅ 已支持 | 解析文章内容 |
+| 通用网页 | ✅ 已支持 | 自动提取正文内容 |
+| GitHub | 🚧 计划中 | 解析 README、仓库信息 |
+| 知乎 | 🚧 计划中 | 专栏文章、回答 |
+| HuggingFace | 🚧 计划中 | Papers、Models、Datasets |
+| 小红书 | 🚧 计划中 | 笔记内容 |
+| Twitter/X | 🚧 计划中 | 推文内容 |
+
+## 核心功能
+
+- **自动解析**: 输入链接，自动抓取网页内容
+- **双语输出**: LLM 生成中英文标题和摘要
+- **智能标签**: 从预设标签匹配 + 自动生成新标签
+- **日期提取**: 自动提取文章发布日期
+- **一键发布**: 确认后直接发布到 Telegram 频道
 
 ## 安装
 
 ```bash
-# 克隆项目
-git clone <repo-url>
-cd telegram_channel_bot
+git clone https://github.com/0xPabloxx/telegram_knowledge_base_agent.git
+cd telegram_knowledge_base_agent
 
-# 创建虚拟环境
 python3 -m venv venv
 source venv/bin/activate
 
-# 安装依赖
 pip install -e .
 ```
 
@@ -86,179 +79,142 @@ pip install -e .
 创建 `.env` 文件：
 
 ```bash
-# Telegram 配置
+# Telegram
 KB_TELEGRAM_BOT_TOKEN=your_bot_token
 KB_TELEGRAM_CHANNEL_ID=@your_channel
 
-# LLM 配置
-KB_LLM_PROVIDER=deepseek  # 或 openai, gemini, anthropic, kimi, minimax, glm
+# LLM (支持: deepseek, openai, gemini, anthropic, kimi, minimax, glm)
+KB_LLM_PROVIDER=deepseek
 DEEPSEEK_API_KEY=your_api_key
 
-# 预设标签（逗号分隔）
+# 预设标签
 KB_PRESET_TAGS=Paper,LLM,Agent,Research,Tutorial
 ```
 
 ## 使用
 
 ```bash
-# 激活虚拟环境
 source venv/bin/activate
-
-# 启动 CLI
 kb
 ```
 
-### 输入示例
-
-```bash
-# 纯链接
-https://arxiv.org/abs/2312.xxxxx
-
-# 链接 + 描述
-https://example.com/article
-这是一篇关于 AI Agent 的文章，推荐阅读！
-
-# 本地文件（支持拖拽）
-/path/to/document.pdf
-
-# 纯文字
-今天学到了一个新概念：RAG（检索增强生成）...
+然后输入链接即可：
 ```
-
-## 限制
-
-- 仅支持 PDF 和图片文件，不支持 Word、Excel 等格式
-- 图片不会进行 OCR 或视觉理解，仅记录基本信息
-- 需要稳定的网络连接访问 LLM API
+▶ 有什么想收藏的？
+https://arxiv.org/abs/2312.xxxxx
+```
 
 ---
 
 # English
 
-## Introduction
+## What is this?
 
-KB is a personal knowledge base automation CLI tool that processes links, files, and text content, then publishes them to a Telegram channel. It uses LLM to automatically generate bilingual summaries and smart tags.
+A CLI tool that helps you quickly organize and publish interesting content to your Telegram channel:
 
-## Features
-
-### Content Processing
-- **Link Parsing**: Automatically scrape web content, extract title and body
-  - Support mixed input (URL + text description)
-  - ArXiv paper links auto-convert to abstract page for parsing
-  - WeChat article parsing
-- **File Processing**: Support local file drag-and-drop
-  - PDF documents: Extract text content
-  - Images: JPG, PNG, GIF, WebP, BMP
-- **Plain Text**: Support direct text input
-
-### AI Capabilities
-- **Bilingual Summary Generation**: Auto-generate Chinese and English titles and summaries
-  - Original titles are translated (not auto-generated)
-  - Chinese and English summaries are independently optimized
-- **Smart Tag Suggestions**:
-  - Match ALL relevant tags from presets (no limit)
-  - Auto-generate additional specific tags
-  - Auto-translate between Chinese and English tags
-  - Auto-generate case variants (improves Telegram search)
-
-### Multi-LLM Support
-| Provider | Model |
-|----------|-------|
-| DeepSeek | deepseek-chat |
-| OpenAI | gpt-4o-mini |
-| Anthropic | claude-3-5-sonnet |
-| Google Gemini | gemini-1.5-flash |
-| Kimi (Moonshot) | moonshot-v1-8k |
-| MiniMax | abab6.5s-chat |
-| GLM (Zhipu) | glm-4-flash |
-
-### Output Format
 ```
-📌 Chinese Title
+Input: https://arxiv.org/abs/2312.xxxxx
 
-📝 Chinese summary
+Output to Telegram:
+📌 Chinese Title (auto-translated)
 
-🔗 Link
+📅 2024-12-01
 
-🏷️ #ChineseTag #EnglishTag
+📝 Chinese summary...
+
+🔗 https://arxiv.org/abs/2312.xxxxx
+
+🏷️ #Chinese #Tags
 
 ────────────────────
 
 📌 English Title
 
-📝 English summary
+📅 2024-12-01
 
-🔗 Link
+📝 English summary...
 
-🏷️ #EnglishTag #englishtag
+🔗 https://arxiv.org/abs/2312.xxxxx
+
+🏷️ #English #Tags
 ```
+
+## Supported Link Types
+
+| Type | Status | Description |
+|------|--------|-------------|
+| ArXiv | ✅ Supported | Auto-extract paper title, abstract, date |
+| WeChat Articles | ✅ Supported | Parse article content |
+| General Web | ✅ Supported | Auto-extract main content |
+| GitHub | 🚧 Planned | Parse README, repo info |
+| Zhihu | 🚧 Planned | Articles, answers |
+| HuggingFace | 🚧 Planned | Papers, Models, Datasets |
+| Xiaohongshu | 🚧 Planned | Note content |
+| Twitter/X | 🚧 Planned | Tweet content |
+
+## Core Features
+
+- **Auto-parsing**: Input a link, automatically scrape web content
+- **Bilingual Output**: LLM generates Chinese and English titles/summaries
+- **Smart Tags**: Match from presets + auto-generate new tags
+- **Date Extraction**: Auto-extract article publish date
+- **One-click Publish**: Publish to Telegram channel after confirmation
 
 ## Installation
 
 ```bash
-# Clone the project
-git clone <repo-url>
-cd telegram_channel_bot
+git clone https://github.com/0xPabloxx/telegram_knowledge_base_agent.git
+cd telegram_knowledge_base_agent
 
-# Create virtual environment
 python3 -m venv venv
 source venv/bin/activate
 
-# Install dependencies
 pip install -e .
 ```
 
 ## Configuration
 
-Create a `.env` file:
+Create `.env` file:
 
 ```bash
-# Telegram Configuration
+# Telegram
 KB_TELEGRAM_BOT_TOKEN=your_bot_token
 KB_TELEGRAM_CHANNEL_ID=@your_channel
 
-# LLM Configuration
-KB_LLM_PROVIDER=deepseek  # or openai, gemini, anthropic, kimi, minimax, glm
+# LLM (supports: deepseek, openai, gemini, anthropic, kimi, minimax, glm)
+KB_LLM_PROVIDER=deepseek
 DEEPSEEK_API_KEY=your_api_key
 
-# Preset Tags (comma-separated)
+# Preset Tags
 KB_PRESET_TAGS=Paper,LLM,Agent,Research,Tutorial
 ```
 
 ## Usage
 
 ```bash
-# Activate virtual environment
 source venv/bin/activate
-
-# Start CLI
 kb
 ```
 
-### Input Examples
-
-```bash
-# Pure link
+Then input a link:
+```
+▶ What do you want to save?
 https://arxiv.org/abs/2312.xxxxx
-
-# Link + description
-https://example.com/article
-This is an article about AI Agents, recommended reading!
-
-# Local file (drag-and-drop supported)
-/path/to/document.pdf
-
-# Plain text
-Today I learned a new concept: RAG (Retrieval Augmented Generation)...
 ```
 
-## Limitations
-
-- Only supports PDF and image files, not Word, Excel, etc.
-- Images are not OCR'd or visually understood, only basic info is recorded
-- Requires stable network connection to access LLM APIs
-
 ---
+
+## Supported LLM Providers
+
+| Provider | Model |
+|----------|-------|
+| DeepSeek | deepseek-chat |
+| OpenAI | gpt-4o-mini |
+| Anthropic | claude-3-5-sonnet |
+| Google Gemini | gemini-1.5-flash |
+| Kimi | moonshot-v1-8k |
+| MiniMax | abab6.5s-chat |
+| GLM | glm-4-flash |
 
 ## License
 
