@@ -12,10 +12,17 @@
 
 ## 这是什么？
 
+Demo：
+https://github.com/user-attachments/assets/ccac982f-a070-49c8-827d-34149fe2d01d
+
 一个命令行工具，帮你把网上看到的好内容快速整理发布到 Telegram 频道：
 
 ```
 输入: https://arxiv.org/abs/2312.xxxxx
+
+
+
+
 
 输出到 Telegram:
 📌 稳定大语言模型强化学习：公式化方法与实践
