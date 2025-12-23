@@ -104,14 +104,20 @@ class LinkProcessor(BaseProcessor):
         metadata = trafilatura.extract_metadata(html)
 
         title = ""
+        publish_date = ""
         if metadata:
             title = metadata.title or ""
+            # Extract date from metadata
+            publish_date = metadata.date or ""
 
-        # Special handling for ArXiv - extract title from meta tag or h1
+        # Special handling for ArXiv - extract title and date
         if "arxiv.org" in url:
             arxiv_title = self._extract_arxiv_title(html)
             if arxiv_title:
                 title = arxiv_title
+            arxiv_date = self._extract_arxiv_date(html)
+            if arxiv_date:
+                publish_date = arxiv_date
 
         # Fallback title extraction
         if not title:
@@ -125,6 +131,7 @@ class LinkProcessor(BaseProcessor):
             title=title,
             source=original_url,
             content=content[:10000],  # Limit content length for LLM
+            publish_date=publish_date if publish_date else None,
         )
 
     def _normalize_arxiv_url(self, url: str) -> tuple[str, str]:
@@ -166,6 +173,39 @@ class LinkProcessor(BaseProcessor):
         match = re.search(r'<h1[^>]*class="title[^"]*"[^>]*>(?:<span[^>]*>Title:</span>)?\s*([^<]+)', html, re.IGNORECASE)
         if match:
             return match.group(1).strip()
+
+        return ""
+
+    def _extract_arxiv_date(self, html: str) -> str:
+        """Extract submission/publication date from ArXiv page."""
+        import re
+
+        # Try citation_date meta tag (format: YYYY/MM/DD)
+        match = re.search(r'<meta\s+name="citation_date"\s+content="([^"]+)"', html, re.IGNORECASE)
+        if match:
+            date_str = match.group(1).strip()
+            # Convert YYYY/MM/DD to YYYY-MM-DD
+            return date_str.replace("/", "-")
+
+        # Try citation_online_date
+        match = re.search(r'<meta\s+name="citation_online_date"\s+content="([^"]+)"', html, re.IGNORECASE)
+        if match:
+            date_str = match.group(1).strip()
+            return date_str.replace("/", "-")
+
+        # Try to find "Submitted on DD Mon YYYY" pattern
+        match = re.search(r'Submitted\s+on\s+(\d{1,2}\s+\w+\s+\d{4})', html, re.IGNORECASE)
+        if match:
+            return match.group(1)
+
+        # Try dateline class
+        match = re.search(r'class="dateline"[^>]*>([^<]+)<', html, re.IGNORECASE)
+        if match:
+            dateline = match.group(1).strip()
+            # Extract date from "Submitted on 2 Dec 2024"
+            date_match = re.search(r'(\d{1,2}\s+\w+\s+\d{4})', dateline)
+            if date_match:
+                return date_match.group(1)
 
         return ""
 

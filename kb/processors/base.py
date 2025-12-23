@@ -114,6 +114,9 @@ class ProcessedContent:
     title_en: Optional[str] = None
     summary_en: Optional[str] = None
 
+    # Date from the content (publication date, not add date)
+    publish_date: Optional[str] = None
+
     # For file-based content
     file_path: Optional[Path] = None
     file_size: Optional[int] = None
@@ -198,6 +201,11 @@ class ProcessedContent:
         lines.append(f"📌 {cn_title}")
         lines.append("")
 
+        # Publish date
+        if self.publish_date:
+            lines.append(f"📅 {self.publish_date}")
+            lines.append("")
+
         # Chinese summary
         if self.summary:
             lines.append(f"📝 {self.summary}")
@@ -228,6 +236,11 @@ class ProcessedContent:
         en_title = self.title_en or self.title
         lines.append(f"📌 {en_title}")
         lines.append("")
+
+        # Publish date (same for both sections)
+        if self.publish_date:
+            lines.append(f"📅 {self.publish_date}")
+            lines.append("")
 
         # English summary
         if self.summary_en:
