@@ -12,16 +12,14 @@
 
 ## 这是什么？
 
-Demo：
-https://github.com/user-attachments/assets/ccac982f-a070-49c8-827d-34149fe2d01d
+### Demo
+
+https://github.com/0xPabloxx/telegram_knowledge_base_agent/raw/main/demo.mp4
 
 一个命令行工具，帮你把网上看到的好内容快速整理发布到 Telegram 频道：
 
 ```
 输入: https://arxiv.org/abs/2312.xxxxx
-
-
-
 
 
 输出到 Telegram:
