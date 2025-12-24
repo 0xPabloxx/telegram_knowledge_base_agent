@@ -23,6 +23,7 @@ dependencies = [
 
 [project.scripts]
 kb = "kb.cli:main"
+kb-serve = "kb.bot:run_bot"
 
 [build-system]
 requires = ["hatchling"]
