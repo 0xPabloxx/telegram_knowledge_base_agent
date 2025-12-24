@@ -1,6 +1,7 @@
 """Link processor for web pages."""
 from __future__ import annotations
 
+import json
 import re
 from urllib.parse import urlparse
 
@@ -8,6 +9,16 @@ import httpx
 import trafilatura
 
 from .base import BaseProcessor, ProcessedContent, ContentType
+
+
+# Zhihu-specific headers to bypass anti-scraping
+ZHIHU_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "zh-CN,zh-Hans;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Connection": "keep-alive",
+}
 
 
 # Pattern to find URLs anywhere in text
@@ -68,15 +79,35 @@ class LinkProcessor(BaseProcessor):
         parsed_url = urlparse(url)
         source = parsed_url.netloc
 
+        # Check if it's a Zhihu URL
+        is_zhihu = "zhihu.com" in url
+
+        # Select appropriate headers
+        if is_zhihu:
+            headers = ZHIHU_HEADERS
+        else:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+            }
+
         # Fetch the page
         async with httpx.AsyncClient(
             timeout=self.timeout,
             follow_redirects=True,
-            headers={
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-            }
+            headers=headers
         ) as client:
             response = await client.get(url)
+
+            # Handle Zhihu anti-scraping (403 or CAPTCHA)
+            if is_zhihu and (response.status_code == 403 or "安全验证" in response.text):
+                # Return with explanation - Zhihu has strong anti-bot protection
+                return ProcessedContent(
+                    content_type=ContentType.LINK,
+                    title="知乎链接 (需要手动复制内容)",
+                    source=original_url,
+                    content="知乎有严格的反爬虫保护，无法自动抓取内容。请手动复制文章内容后使用文本模式输入。",
+                )
+
             response.raise_for_status()
 
             # Check content type - if PDF, we can't parse it as HTML
@@ -118,6 +149,16 @@ class LinkProcessor(BaseProcessor):
             arxiv_date = self._extract_arxiv_date(html)
             if arxiv_date:
                 publish_date = arxiv_date
+
+        # Special handling for Zhihu - extract title, content, and date
+        if is_zhihu:
+            zhihu_data = self._extract_zhihu_content(html, url)
+            if zhihu_data.get("title"):
+                title = zhihu_data["title"]
+            if zhihu_data.get("content"):
+                extracted = zhihu_data["content"]
+            if zhihu_data.get("date"):
+                publish_date = zhihu_data["date"]
 
         # Fallback title extraction
         if not title:
@@ -208,6 +249,88 @@ class LinkProcessor(BaseProcessor):
                 return date_match.group(1)
 
         return ""
+
+    def _extract_zhihu_content(self, html: str, url: str) -> dict:
+        """Extract content from Zhihu page."""
+        result = {"title": "", "content": "", "date": "", "author": ""}
+
+        # Try to extract from JSON-LD script
+        json_ld_match = re.search(
+            r'<script[^>]*type="application/ld\+json"[^>]*>([^<]+)</script>',
+            html, re.IGNORECASE
+        )
+        if json_ld_match:
+            try:
+                data = json.loads(json_ld_match.group(1))
+                if isinstance(data, dict):
+                    result["title"] = data.get("headline", "") or data.get("name", "")
+                    result["content"] = data.get("articleBody", "") or data.get("text", "")
+                    result["date"] = data.get("datePublished", "") or data.get("dateCreated", "")
+                    if "author" in data:
+                        author = data["author"]
+                        if isinstance(author, dict):
+                            result["author"] = author.get("name", "")
+                        elif isinstance(author, str):
+                            result["author"] = author
+            except json.JSONDecodeError:
+                pass
+
+        # Try to extract from initial data script (Zhihu stores data here)
+        initial_data_match = re.search(
+            r'<script[^>]*id="js-initialData"[^>]*>([^<]+)</script>',
+            html, re.IGNORECASE
+        )
+        if initial_data_match and not result["content"]:
+            try:
+                data = json.loads(initial_data_match.group(1))
+                # Navigate the complex Zhihu data structure
+                if "initialState" in data:
+                    state = data["initialState"]
+                    # Extract answer content
+                    if "entities" in state and "answers" in state["entities"]:
+                        answers = state["entities"]["answers"]
+                        for answer_id, answer in answers.items():
+                            if not result["content"]:
+                                result["content"] = answer.get("content", "")
+                                result["date"] = answer.get("createdTime", "") or answer.get("updatedTime", "")
+                    # Extract question title
+                    if "entities" in state and "questions" in state["entities"]:
+                        questions = state["entities"]["questions"]
+                        for q_id, question in questions.items():
+                            if not result["title"]:
+                                result["title"] = question.get("title", "")
+            except json.JSONDecodeError:
+                pass
+
+        # Fallback: extract from HTML meta tags
+        if not result["title"]:
+            og_title = re.search(r'<meta[^>]*property="og:title"[^>]*content="([^"]+)"', html, re.IGNORECASE)
+            if og_title:
+                result["title"] = og_title.group(1).strip()
+
+        if not result["content"]:
+            # Try to extract from RichText span
+            content_match = re.search(r'<span[^>]*class="RichText[^"]*"[^>]*>(.*?)</span>', html, re.DOTALL)
+            if content_match:
+                # Remove HTML tags
+                content = re.sub(r'<[^>]+>', '', content_match.group(1))
+                result["content"] = content.strip()
+
+        # Clean up content - remove HTML tags if present
+        if result["content"]:
+            result["content"] = re.sub(r'<[^>]+>', '', result["content"])
+            result["content"] = result["content"].strip()
+
+        # Format date if it's a timestamp
+        if result["date"] and result["date"].isdigit():
+            from datetime import datetime
+            try:
+                dt = datetime.fromtimestamp(int(result["date"]))
+                result["date"] = dt.strftime("%Y-%m-%d")
+            except (ValueError, OSError):
+                pass
+
+        return result
 
     def _extract_title_from_html(self, html: str) -> str:
         """Extract title from HTML as fallback."""

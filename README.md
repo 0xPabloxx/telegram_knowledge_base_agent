@@ -51,8 +51,8 @@
 | ArXiv | ✅ 已支持 | 自动提取论文标题、摘要、发布日期 |
 | 微信公众号 | ✅ 已支持 | 解析文章内容 |
 | 通用网页 | ✅ 已支持 | 自动提取正文内容 |
+| 知乎 | ⚠️ 受限 | 有反爬保护，建议手动复制内容使用文本模式 |
 | GitHub | 🚧 计划中 | 解析 README、仓库信息 |
-| 知乎 | 🚧 计划中 | 专栏文章、回答 |
 | HuggingFace | 🚧 计划中 | Papers、Models、Datasets |
 | 小红书 | 🚧 计划中 | 笔记内容 |
 | Twitter/X | 🚧 计划中 | 推文内容 |
@@ -149,8 +149,8 @@ Output to Telegram:
 | ArXiv | ✅ Supported | Auto-extract paper title, abstract, date |
 | WeChat Articles | ✅ Supported | Parse article content |
 | General Web | ✅ Supported | Auto-extract main content |
+| Zhihu | ⚠️ Limited | Anti-scraping protection, use text mode instead |
 | GitHub | 🚧 Planned | Parse README, repo info |
-| Zhihu | 🚧 Planned | Articles, answers |
 | HuggingFace | 🚧 Planned | Papers, Models, Datasets |
 | Xiaohongshu | 🚧 Planned | Note content |
 | Twitter/X | 🚧 Planned | Tweet content |

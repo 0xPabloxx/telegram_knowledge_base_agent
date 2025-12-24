@@ -38,49 +38,31 @@ GET https://api.github.com/repos/{owner}/{repo}/readme
 
 ## 知乎链接支持
 
-### 目标
-支持解析知乎文章和回答链接。
+### 状态
+⚠️ **受限支持** - 知乎有严格的反爬保护（zse-ck JavaScript验证），无法自动抓取。
 
-### 需要处理的链接类型
-- `zhuanlan.zhihu.com/p/{id}` - 专栏文章
-- `zhihu.com/question/{qid}/answer/{aid}` - 回答
-- `zhihu.com/question/{qid}` - 问题页面
+### 已尝试的方案
+1. ❌ 移动端 User-Agent - 仍返回 403
+2. ❌ curl_cffi (模拟浏览器 TLS) - 仍返回 403
+3. ❌ Playwright + Stealth - 触发验证码页面
+4. ❌ 直接调用 Zhihu API - 需要认证
 
-### 需要提取的信息
-- [ ] 标题
-- [ ] 作者
-- [ ] 发布/更新日期
-- [ ] 正文内容
-- [ ] 点赞数（可选）
+### 当前解决方案
+- 检测到知乎链接时，返回友好提示
+- 建议用户手动复制内容，使用文本模式输入
 
-### 实现挑战
-1. 知乎有反爬机制，需要模拟浏览器请求
-2. 部分内容需要登录才能查看
-3. 页面结构可能动态变化
-
-### 实现方案
-1. 添加知乎专用 User-Agent
-2. 尝试提取 JSON-LD 结构化数据
-3. 使用 CSS 选择器提取正文
-4. 备选：使用 Selenium/Playwright 渲染
-
-### 可能需要的 Headers
-```python
-headers = {
-    "User-Agent": "Mozilla/5.0 ...",
-    "Cookie": "可选的登录 cookie",
-    "Referer": "https://www.zhihu.com/"
-}
-```
+### 可能的改进方向
+- 支持用户提供登录 Cookie
+- 使用第三方 API 服务（如 Jina Reader）
+- 等待知乎放松限制
 
 ---
 
 ## 优先级
 
 1. **High**: GitHub 仓库主页解析
-2. **Medium**: 知乎专栏文章解析
-3. **Low**: GitHub Issues/PRs 解析
-4. **Low**: 知乎回答解析
+2. **Low**: GitHub Issues/PRs 解析
+3. **On Hold**: 知乎 - 需要等待更好的解决方案
 
 ---
 
